@@ -1,0 +1,23 @@
+
+Debug/
+Release/
+
+# Generated compiler / linker output
+
+*.o
+*.d
+*.elf
+*.map
+*.list
+*.su
+*.cyclo
+*.bin
+*.hex
+
+# Eclipse workspace files
+.metadata/
+
+# Operating system files
+
+.DS_Store
+Thumbs.db

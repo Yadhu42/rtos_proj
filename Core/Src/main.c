@@ -1,0 +1,159 @@
+/**
+ * Application entry point
+ */
+#include <string.h>
+#include "button.h"
+#include "dma.h"
+#include "gpio.h"
+#include "irq.h"
+#include "rcc.h"
+#include "error_handler_task.h"
+#include "fram.h"
+#include "sensors_task.h"
+#include "sys_health_monitor.h"
+#include "system_event.h"
+#include "FreeRTOSConfig.h"
+#include "FreeRTOSTasks.h"
+
+// System Event Group Handle
+EventGroupHandle_t system_event_group;
+
+
+//Startup Task prototype
+static void startup(void);
+
+// FRAM test prototype
+static void fram_test(void);
+
+int main(void)
+{
+  /**
+   * Initial RCC configuration and clock frequency tests
+   */
+  uint32_t system_clock = 0;
+  uint32_t hclk         = 0;
+  uint32_t apb1_clock   = 0;
+  uint32_t apb2_clock   = 0;
+
+  (void)system_clock;
+  (void)hclk;
+  (void)apb1_clock;
+  (void)apb2_clock;
+
+  rcc_init();
+
+  system_clock = rcc_get_sysclk_freq();
+  hclk         = rcc_get_hclk_freq();
+  apb1_clock   = rcc_get_pclk1_freq();
+  apb2_clock   = rcc_get_pclk2_freq();
+
+  //Update the 'SystemCoreClock' variable required by FreeRTOS
+  SystemCoreClockUpdate();
+
+  //Initialize the required GPIOs
+  gpio_init();
+
+  //Set IRQ priorities
+  irq_set_priorities();
+
+  // Initialize DMA
+  dma_init();
+
+  //Create the startup task
+  startup();
+
+  //Start the FreeRTOS scheduler
+  vTaskStartScheduler();
+
+  while(1)
+  {
+
+  }
+}
+
+/**
+ * Startup task used for the required FreeRTOS initialization on startup
+ */
+static void startup_task(void *param)
+{
+  // Create Event Group
+  system_event_group = xEventGroupCreate();
+  configASSERT(system_event_group != NULL);
+
+  // Initializer the USER Button
+  button_init();
+
+  // Check if the IWDG caused reset
+  button_check_and_acknowledge_iwdg_event();
+
+  // Initialize FRAM
+  fram_init();
+
+  // Run FRAM test
+  fram_test();
+
+  //Start Error Handler Task
+  error_handler_task_start();
+
+  //Start Sensors Task
+  sensors_task_start();
+
+  //Start the System Health Monitor Task
+  sys_health_monitor_task_start();
+
+  //Delete the startup task
+  vTaskDelete(NULL);
+}
+
+
+/**
+ * Creates Startup Task
+ */
+static void startup(void)
+{
+  configASSERT(pdPASS == xTaskCreate(startup_task,"Startup Task", STARTUP_TASK_STACK_SIZE, NULL, STARTUP_TASK_PRIORITY, NULL));
+}
+
+/**
+ * Basic FRAM validation test.
+ *
+ * This test writes a predefined pattern to the FRAM, reads it back,
+ * and verifies correctness using a simple memory comparison.
+ *
+ * In a production-ready system, this test could be expanded to include
+ * writing to larger portions of memory or testing across the end address.
+ * Additionally, an alert or error-handling mechanism (such as logging if available
+ * or triggering a system fault response) could be integrated into a startup test sequence.
+ */
+static void fram_test(void)
+{
+  uint8_t write_data[] = {0xAB, 0xCD, 0xEF, 0x12};  // Test pattern
+  uint8_t read_data[sizeof(write_data)] = {0};
+  uint16_t test_address = FRAM_ADDR_START + 500;
+
+  error_t status;
+
+  // Write test data
+  status = fram_write(test_address, write_data, sizeof(write_data));
+  if (status != ERR_OK)
+  {
+    while (1);
+  }
+
+  // Read back data
+  status = fram_read(test_address, read_data, sizeof(read_data));
+  if (status != ERR_OK)
+  {
+    while (1);
+  }
+
+  // Validate data
+  if (memcmp(write_data, read_data, sizeof(write_data)) != 0)
+  {
+    while (1);
+  }
+}
+
+
+
+
