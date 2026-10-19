@@ -139,36 +139,3 @@ void error_handler_task_start(void)
   //Create the task
   configASSERT(pdPASS == xTaskCreate(error_handler_task, "Error Handler Task", ERROR_HANDLER_TASK_STACK_SIZE, NULL, ERROR_HANDLER_TASK_PRIORITY, NULL))
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
