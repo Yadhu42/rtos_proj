@@ -121,6 +121,7 @@ static void sys_health_monitor_task(void *param)
        iwdg_reset();
 
       g_sensors_task_ok = false;
+      mcu_temp_ok = true;
       // Reset any other task flags as well
     }
     else
