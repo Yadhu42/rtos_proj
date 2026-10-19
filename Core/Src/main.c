@@ -101,6 +101,9 @@ static void startup_task(void *param)
   //Start the System Health Monitor Task
   sys_health_monitor_task_start();
 
+  // Start the Modbus Tasks
+  modbus_slave_tasks_start();
+
   //Delete the startup task
   vTaskDelete(NULL);
 }

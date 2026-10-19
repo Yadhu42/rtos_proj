@@ -10,7 +10,6 @@
 #define INC_GPIO_H_
 
 #include "mcu.h"
-#include "gpio_defs.h"
 
 /**
  * Defines the pin numbers for use in GPIO operations. Each pin number
