@@ -182,7 +182,6 @@ static error_t handle_sensor_update(uint16_t current_value, uint16_t threshold_v
           {
             status = modbus_data_update_nvs_input_regs();
           }
-
         }
       }
     }
@@ -216,6 +215,8 @@ static error_t handle_voc_index_update(uint16_t voc_index)
     modbus_nvs_input_registers_t modbus_nvs_input_regs = modbus_get_nvs_input_registers();
     status = handle_sensor_update(voc_index, max_voc_index, &modbus_nvs_input_regs.input_alarm_count_voc, INPUT_ALARM_COUNT_VOC,DISC_VOC_ALARM,true);
   }
+
+  return status;
 }
 
 /**
@@ -431,7 +432,7 @@ error_t modbus_data_mgr_send_feedback_msg(error_t feedback_status){
   modbus_data_mgr_feedback_msg_t feedback_msg;
   feedback_msg.status = feedback_status;
 
-  if(xQueueSend(modbus_data_mgr_queue_handle, &feedback_msg, portMAX_DELAY) != pdTRUE)
+  if(xQueueSend(modbus_feedback_queue_handle, &feedback_msg, portMAX_DELAY) != pdTRUE)
   {
     status = ERR_FAIL;
   }
